@@ -11,14 +11,14 @@ const dirname = path.dirname(filename);
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "/react-todo-app/", 
+  base: "./", 
   build: {
     rollupOptions: {
       input: {
         main: path.resolve(dirname, "index.html"),
         ...(fs.existsSync(path.resolve(dirname, "404.html"))
-          ? { 404: path.resolve(__dirname, "404.html") }
-          : {}),
+          ? { "404": path.resolve(dirname, "404.html") }
+        : {}),
       },
     },
   },
