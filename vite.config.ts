@@ -1,26 +1,24 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react-swc"
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "path"; // ◀◀ 追加
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
 
-const repositoryName = "react-todo-app";
-
+// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: process.env.NODE_ENV === "production" ? `/${repositoryName}/` : "/",
+  base: "/react-todo-app/",
   build: {
     rollupOptions: {
       input: {
-        main: path.resolve(dirname, "index.html"),
+        main: path.resolve(__dirname, "index.html"),
+        404: path.resolve(__dirname, "404.html"),
       },
     },
   },
   server: {
     port: 3000,
+    strictPort: false,
     open: true,
   },
 });
