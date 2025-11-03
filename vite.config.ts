@@ -6,9 +6,9 @@ import path from "path"; // ◀◀ 追加
 const repositoryName = "react-todo-app"; // ◀◀ 追加
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
-  base: process.env.NODE_ENV === "production" ? `/${repositoryName}/` : "/",
+  base: mode === "production" ? `/${repositoryName}/` : "/",
   build: {
     rollupOptions: {
       input: {
@@ -22,4 +22,4 @@ export default defineConfig({
     strictPort: false,
     open: true,
   },
-});
+}));
