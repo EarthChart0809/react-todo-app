@@ -1,18 +1,24 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc"
+import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path"; // ◀◀ 追加
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
+// ESM では dirname を自作する必要あり
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "/react-todo-app/",
+  base: "/react-todo-app/", 
   build: {
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, "index.html"),
-        404: path.resolve(__dirname, "404.html"),
+        main: path.resolve(dirname, "index.html"),
+        ...(fs.existsSync(path.resolve(dirname, "404.html"))
+          ? { 404: path.resolve(__dirname, "404.html") }
+          : {}),
       },
     },
   },
