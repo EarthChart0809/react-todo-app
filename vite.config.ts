@@ -11,7 +11,7 @@ const dirname = path.dirname(filename);
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "./", 
+  base: "/react-todo-app/", 
   build: {
     rollupOptions: {
       input: {
