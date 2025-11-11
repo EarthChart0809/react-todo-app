@@ -1,158 +1,135 @@
 import { useState } from "react";
-import type { Todo } from "./types";
-import { initTodos } from "./initTodos";
-import WelcomeMessage from "./WelcomeMessage";
-import TodoList from "./TodoList";
-import { v4 as uuid } from "uuid";
-import dayjs from "dayjs";
-import { twMerge } from "tailwind-merge"; // ◀◀ 追加
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"; // ◀◀ 追加
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons"; // ◀◀ 追加
+import "react-calendar/dist/Calendar.css";
+import Calendar from "react-calendar";
 
-const App = () => {
-  const [todos, setTodos] = useState<Todo[]>(initTodos);
-  const [newTodoName, setNewTodoName] = useState("");
-  const [newTodoPriority, setNewTodoPriority] = useState(3);
-  const [newTodoDeadline, setNewTodoDeadline] = useState<Date | null>(null);
-  const [newTodoNameError, setNewTodoNameError] = useState("");
+function App() {
+  const schedule = [
+    {
+      period: "11月中旬（高専祭明け）",
+      tasks: ["レスコン概要説明", "アイデア出し"],
+    },
+    {
+      period: "12月初旬（後期中間明け）",
+      tasks: ["アイデア決定", "エントリーシート作成"],
+    },
+    {
+      period: "2月中旬",
+      tasks: ["書類審査"],
+    },
+    {
+      period: "結果判明後",
+      tasks: ["部品発注", "仕様決定", "回路班・プログラム班始動"],
+    },
+    {
+      period: "3月下旬",
+      tasks: ["足回り完成", "アーム完成"],
+    },
+    {
+      period: "4月上旬",
+      tasks: ["回路班・プログラム班の調整"],
+    },
+  ];
 
-  const uncompletedCount = todos.filter((todo: Todo) => !todo.isDone).length;
+  const [tasks, setTasks] = useState([
+    { id: 1, title: "カメラ制御プログラム", team: "ソフト班", progress: 40 },
+    { id: 2, title: "電源基板設計", team: "回路班", progress: 70 },
+    { id: 3, title: "アーム設計", team: "機構班", progress: 50 },
+  ]);
 
-  // ▼▼ 追加
-  const isValidTodoName = (name: string): string => {
-    if (name.length < 2 || name.length > 32) {
-      return "2文字以上、32文字以内で入力してください";
-    } else {
-      return "";
-    }
-  };
+  const [newTask, setNewTask] = useState("");
+  const [newTeam, setNewTeam] = useState("");
 
-  const updateNewTodoName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTodoNameError(isValidTodoName(e.target.value)); // ◀◀ 追加
-    setNewTodoName(e.target.value);
-  };
-
-  const updateNewTodoPriority = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTodoPriority(Number(e.target.value));
-  };
-
-  const updateDeadline = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dt = e.target.value; // UIで日時が未設定のときは空文字列 "" が dt に格納される
-    console.log(`UI操作で日時が "${dt}" (${typeof dt}型) に変更されました。`);
-    setNewTodoDeadline(dt === "" ? null : new Date(dt));
-  };
-
-  const addNewTodo = () => {
-    // ▼▼ 編集
-    const err = isValidTodoName(newTodoName);
-    if (err !== "") {
-      setNewTodoNameError(err);
-      return;
-    }
-    const newTodo: Todo = {
-      id: uuid(),
-      name: newTodoName,
-      isDone: false,
-      priority: newTodoPriority,
-      deadline: newTodoDeadline,
-    };
-    const updatedTodos = [...todos, newTodo];
-    setTodos(updatedTodos);
-    setNewTodoName("");
-    setNewTodoPriority(3);
-    setNewTodoDeadline(null);
+  const addTask = () => {
+    if (!newTask || !newTeam) return;
+    setTasks([
+      ...tasks,
+      { id: Date.now(), title: newTask, team: newTeam, progress: 0 },
+    ]);
+    setNewTask("");
+    setNewTeam("");
   };
 
   return (
-    <div className="mx-4 mt-10 max-w-2xl md:mx-auto">
-      <h1 className="mb-4 text-2xl font-bold">TodoApp</h1>
-      <div className="mb-4">
-        <WelcomeMessage
-          name="寝屋川タヌキ"
-          uncompletedCount={uncompletedCount}
-        />
+    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-4">📅 ロボコン進捗管理</h1>
+
+      {/* カレンダー表示 */}
+      <div className="bg-white shadow p-4 rounded-xl mb-6">
+        <Calendar />
       </div>
-      <TodoList todos={todos} />
 
-      <div className="mt-5 space-y-2 rounded-md border p-3">
-        <h2 className="text-lg font-bold">新しいタスクの追加</h2>
-        {/* 編集: ここから... */}
-        <div>
-          <div className="flex items-center space-x-2">
-            <label className="font-bold" htmlFor="newTodoName">
-              名前
-            </label>
-            <input
-              id="newTodoName"
-              type="text"
-              value={newTodoName}
-              onChange={updateNewTodoName}
-              className={twMerge(
-                "grow rounded-md border p-2",
-                newTodoNameError && "border-red-500 outline-red-500"
-              )}
-              placeholder="2文字以上、32文字以内で入力してください"
-            />
-          </div>
-          {newTodoNameError && (
-            <div className="ml-10 flex items-center space-x-1 text-sm font-bold text-red-500">
-              <FontAwesomeIcon
-                icon={faTriangleExclamation}
-                className="mr-0.5"
-              />
-              <div>{newTodoNameError}</div>
-            </div>
-          )}
-        </div>
-        {/* ...ここまで */}
-
-        <div className="flex gap-5">
-          <div className="font-bold">優先度</div>
-          {[1, 2, 3].map((value) => (
-            <label key={value} className="flex items-center space-x-1">
-              <input
-                id={`priority-${value}`}
-                name="priorityGroup"
-                type="radio"
-                value={value}
-                checked={newTodoPriority === value}
-                onChange={updateNewTodoPriority}
-              />
-              <span>{value}</span>
-            </label>
+      {/* 全体スケジュール */}
+      <div className="bg-white shadow p-4 rounded-xl w-full max-w-3xl mb-8">
+        <h2 className="text-lg font-semibold mb-3">🗓️ 全体スケジュール目安</h2>
+        <ul className="space-y-3">
+          {schedule.map((s, index) => (
+            <li key={index} className="border-l-4 border-blue-500 pl-3">
+              <p className="font-semibold">{s.period}</p>
+              <ul className="text-gray-700 list-disc ml-6">
+                {s.tasks.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            </li>
           ))}
-        </div>
+        </ul>
+      </div>
 
-        <div className="flex items-center gap-x-2">
-          <label htmlFor="deadline" className="font-bold">
-            期限
-          </label>
+      {/* タスク管理 */}
+      <div className="bg-white shadow p-4 rounded-xl w-full max-w-2xl">
+        <h2 className="text-lg font-semibold mb-2">🧩 班ごとのタスク管理</h2>
+        <ul className="space-y-2">
+          {tasks.map((task) => (
+            <li
+              key={task.id}
+              className="border p-2 rounded-md flex justify-between items-center"
+            >
+              <div>
+                <p className="font-medium">{task.title}</p>
+                <p className="text-sm text-gray-500">{task.team}</p>
+              </div>
+              <span className="text-blue-600 font-semibold">
+                進捗: {task.progress}%
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {/* タスク追加フォーム */}
+        <div className="mt-4 flex flex-col gap-2">
           <input
-            type="datetime-local"
-            id="deadline"
-            value={
-              newTodoDeadline
-                ? dayjs(newTodoDeadline).format("YYYY-MM-DDTHH:mm:ss")
-                : ""
-            }
-            onChange={updateDeadline}
-            className="rounded-md border border-gray-400 px-2 py-0.5"
+            type="text"
+            placeholder="タスク名"
+            className="border p-2 rounded-md"
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
           />
+          <input
+            type="text"
+            placeholder="班名（例：ソフト班）"
+            className="border p-2 rounded-md"
+            value={newTeam}
+            onChange={(e) => setNewTeam(e.target.value)}
+          />
+          <select
+            className="border p-2 rounded-md"
+            value={newTeam}
+            onChange={(e) => setNewTeam(e.target.value)}
+          >
+            <option value="機構班">機構班</option>
+            <option value="回路班">回路班</option>
+            <option value="プログラム班">プログラム班</option>
+          </select>
+          <button
+            onClick={addTask}
+            className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+          >
+            タスク追加
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={addNewTodo}
-          className={twMerge(
-            "rounded-md bg-indigo-500 px-3 py-1 font-bold text-white hover:bg-indigo-600",
-            newTodoNameError && "cursor-not-allowed opacity-50"
-          )}
-        >
-          追加
-        </button>
       </div>
     </div>
   );
-};
+}
 
 export default App;
