@@ -1,75 +1,85 @@
-import { useState } from "react";
+import React, { useState, type ChangeEvent } from "react";
 import "react-calendar/dist/Calendar.css";
 import Calendar from "react-calendar";
 
+type Task = {
+  id: number;
+  title: string;
+  team: string;
+  progress: number;
+  deadline: Date | null;
+  priority: number;
+};
+
 function App() {
   const schedule = [
-  {
-    period: "11月中旬（高専祭明け）",
-    tasks: ["レスコン概要説明", "アイデア出し"],
-    range: [new Date(2025, 10, 10), new Date(2025, 10, 17)], // 11月10〜17日
-    color: "#60a5fa", // blue-400
-  },
-  {
-    period: "12月初旬（後期中間明け）",
-    tasks: ["アイデア決定", "エントリーシート作成"],
-    range: [new Date(2025, 11, 1), new Date(2025, 11, 10)],
-    color: "#34d399", // green-400
-  },
-  {
-    period: "2月中旬",
-    tasks: ["書類審査"],
-    range: [new Date(2026, 1, 10), new Date(2026, 1, 20)],
-    color: "#facc15", // yellow-400
-  },
-  {
-    period: "結果判明後",
-    tasks: ["部品発注", "仕様決定", "回路班・プログラム班始動"],
-    range: [new Date(2026, 1, 21), new Date(2026, 2, 15)],
-    color: "#f97316", // orange-400
-  },
-  {
-    period: "3月下旬",
-    tasks: ["足回り完成", "アーム完成"],
-    range: [new Date(2026, 2, 20), new Date(2026, 2, 31)],
-    color: "#fb7185", // rose-400
-  },
-  {
-    period: "4月上旬",
-    tasks: ["回路班・プログラム班の調整"],
-    range: [new Date(2026, 3, 1), new Date(2026, 3, 10)],
-    color: "#a78bfa", // purple-400
-  },
-  {
-    period: "5月初旬",
-    tasks: ["最終調整", "動画撮影準備"],
-    range: [new Date(2026, 4, 1), new Date(2026, 4, 10)],
-    color: "#f472b6", // pink-400
-  },
-  {
-    period: "5月中旬",
-    tasks: ["動画提出"],
-    range: [new Date(2026, 4, 11), new Date(2026, 4, 20)],
-    color: "#4ade80", // emerald-400
-  },
-];
+    {
+      period: "11月中旬（高専祭明け）",
+      tasks: ["レスコン概要説明", "アイデア出し"],
+      range: [new Date(2025, 10, 10), new Date(2025, 10, 17)], // 11月10〜17日
+      color: "#60a5fa", // blue-400
+    },
+    {
+      period: "12月初旬（後期中間明け）",
+      tasks: ["アイデア決定", "エントリーシート作成"],
+      range: [new Date(2025, 11, 1), new Date(2025, 11, 10)],
+      color: "#34d399", // green-400
+    },
+    {
+      period: "2月中旬",
+      tasks: ["書類審査"],
+      range: [new Date(2026, 1, 10), new Date(2026, 1, 20)],
+      color: "#facc15", // yellow-400
+    },
+    {
+      period: "結果判明後",
+      tasks: ["部品発注", "仕様決定", "回路班・プログラム班始動"],
+      range: [new Date(2026, 1, 21), new Date(2026, 2, 15)],
+      color: "#f97316", // orange-400
+    },
+    {
+      period: "3月下旬",
+      tasks: ["足回り完成", "アーム完成"],
+      range: [new Date(2026, 2, 20), new Date(2026, 2, 31)],
+      color: "#fb7185", // rose-400
+    },
+    {
+      period: "4月上旬",
+      tasks: ["回路班・プログラム班の調整"],
+      range: [new Date(2026, 3, 1), new Date(2026, 3, 10)],
+      color: "#a78bfa", // purple-400
+    },
+    {
+      period: "5月初旬",
+      tasks: ["最終調整", "動画撮影準備"],
+      range: [new Date(2026, 4, 1), new Date(2026, 4, 10)],
+      color: "#f472b6", // pink-400
+    },
+    {
+      period: "5月中旬",
+      tasks: ["動画提出"],
+      range: [new Date(2026, 4, 11), new Date(2026, 4, 20)],
+      color: "#4ade80", // emerald-400
+    },
+  ];
 
-  const [tasks, setTasks] = useState([
-    { id: 1, title: "カメラ制御プログラム", team: "ソフト班", progress: 40,deadline : null , priority: 2 },
-    { id: 2, title: "電源基板設計", team: "回路班", progress: 70 ,deadline : null , priority: 1 },
-    { id: 3, title: "アーム設計", team: "機構班", progress: 50 ,deadline : null ,priority: 3},
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: 1, title: "カメラ制御プログラム", team: "ソフト班", progress: 40, deadline: null, priority: 2 },
+    { id: 2, title: "電源基板設計", team: "回路班", progress: 70, deadline: null, priority: 1 },
+    { id: 3, title: "アーム設計", team: "機構班", progress: 50, deadline: null, priority: 3 },
   ]);
 
   const [newTask, setNewTask] = useState("");
   const [newTeam, setNewTeam] = useState("");
   const [newDeadline, setNewDeadline] = useState<Date | null>(null);
+  const [newTodoPriority, setNewTodoPriority] = useState<number>(3); // 追加
 
   // 優先度マッピング
   const PRIORITY_LABEL: Record<number, string> = { 1: "急ぎ", 2: "通常", 3: "後回し" };
   const PRIORITY_COLOR: Record<number, string> = { 1: "#ef4444", 2: "#f59e0b", 3: "#6b7280" };
 
   const formatDateForInput = (d: Date) => {
-  const pad = (n: number) => n.toString().padStart(2, "0");
+    const pad = (n: number) => n.toString().padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
       d.getHours()
     )}:${pad(d.getMinutes())}`;
@@ -77,40 +87,43 @@ function App() {
 
   const addTask = () => {
     if (!newTask || !newTeam) return;
-    setTasks([
-      ...tasks,
-      { id: Date.now(), title: newTask, team: newTeam, progress: 0 , deadline: newDeadline, priority: newTodoPriority },
-    ]);
+    const newItem: Task = {
+      id: Date.now(),
+      title: newTask,
+      team: newTeam,
+      progress: 0,
+      deadline: newDeadline,
+      priority: newTodoPriority,
+    };
+    setTasks([...tasks, newItem]);
     setNewTask("");
     setNewTeam("");
     setNewDeadline(null);
     setNewTodoPriority(3);
   };
 
-   const updateProgress = (id, progress) => {
-    setTasks(tasks.map(task =>
-      task.id === id ? { ...task, progress } : task
-    ));
+  const updateProgress = (id: number, progress: number) => {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, progress } : task)));
   };
 
-  const updateDeadline = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dt = e.target.value; // UIで日時が未設定のときは空文字列 "" が dt に格納される
+  const updateDeadline = (e: ChangeEvent<HTMLInputElement>) => {
+    const dt = e.target.value;
     console.log(`UI操作で日時が "${dt}" (${typeof dt}型) に変更されました。`);
     setNewDeadline(dt === "" ? null : new Date(dt));
   };
 
   // 班ごとの進捗を計算
   const teams = ["機構班", "プログラム班", "回路班"];
-  const teamProgress = {};
-  teams.forEach(t => {
-    const teamTasks = tasks.filter(task => task.team === t);
+  const teamProgress: Record<string, number> = {};
+  teams.forEach((t) => {
+    const teamTasks = tasks.filter((task) => task.team === t);
     const avg = teamTasks.length
-      ? Math.round(teamTasks.reduce((sum, t) => sum + t.progress, 0) / teamTasks.length)
+      ? Math.round(teamTasks.reduce((sum, tt) => sum + tt.progress, 0) / teamTasks.length)
       : 0;
     teamProgress[t] = avg;
   });
 
-   // 日付が範囲に含まれるか判定
+  // 日付が範囲に含まれるか判定
   const getScheduleColor = (date: Date) => {
     for (const s of schedule) {
       if (date >= s.range[0] && date <= s.range[1]) return s.color;
@@ -118,18 +131,15 @@ function App() {
     return null;
   };
 
-   const [newTodoPriority, setNewTodoPriority] = useState(3); // ◀◀ 追加
-
-    const updateNewTodoPriority = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTodoPriority(Number(e.target.value)); // 数値型に変換
+  const updateNewTodoPriority = (e: ChangeEvent<HTMLInputElement>) => {
+    setNewTodoPriority(Number(e.target.value));
   };
-
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">📅 ロボコン進捗管理</h1>
 
-       <div className="calendar-container bg-white shadow p-4 rounded-xl">
+      <div className="calendar-container bg-white shadow p-4 rounded-xl">
         <Calendar
           tileClassName={({ date }) => {
             const color = getScheduleColor(date);
