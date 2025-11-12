@@ -1,6 +1,7 @@
 import React, { useState, type ChangeEvent } from "react";
 import "react-calendar/dist/Calendar.css";
 import Calendar from "react-calendar";
+import { TaskItem } from "./task_management";
 
 type Task = {
   id: number;
@@ -9,6 +10,7 @@ type Task = {
   progress: number;
   deadline: Date | null;
   priority: number;
+  comment: string;
 };
 
 function App() {
@@ -64,15 +66,15 @@ function App() {
   ];
 
   const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: "カメラ制御プログラム", team: "ソフト班", progress: 40, deadline: null, priority: 2 },
-    { id: 2, title: "電源基板設計", team: "回路班", progress: 70, deadline: null, priority: 1 },
-    { id: 3, title: "アーム設計", team: "機構班", progress: 50, deadline: null, priority: 3 },
+    { id: 1, title: "カメラ制御プログラム", team: "プログラム班", progress: 40, deadline: null, priority: 2 ,comment: ""},
+    { id: 2, title: "電源基板設計", team: "回路班", progress: 70, deadline: null, priority: 1 ,comment: "基盤待ち"},
+    { id: 3, title: "アーム設計", team: "機構班", progress: 50, deadline: null, priority: 3 ,comment: ""},
   ]);
 
   const [newTask, setNewTask] = useState("");
   const [newTeam, setNewTeam] = useState("");
   const [newDeadline, setNewDeadline] = useState<Date | null>(null);
-  const [newTodoPriority, setNewTodoPriority] = useState<number>(3); // 追加
+  const [newTodoPriority, setNewTodoPriority] = useState<number>(3); 
 
   // 優先度マッピング
   const PRIORITY_LABEL: Record<number, string> = { 1: "急ぎ", 2: "通常", 3: "後回し" };
@@ -94,6 +96,7 @@ function App() {
       progress: 0,
       deadline: newDeadline,
       priority: newTodoPriority,
+      comment: "",
     };
     setTasks([...tasks, newItem]);
     setNewTask("");
@@ -135,10 +138,23 @@ function App() {
     setNewTodoPriority(Number(e.target.value));
   };
 
+  const handleCommentChange = (id: number, newComment: string) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, comment: newComment } : t))
+    );
+  };
+
+  const handleProgressChange = (id: number, newProgress: number) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, progress: newProgress } : t))
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-4">📅 ロボコン進捗管理</h1>
+      <h1 className="text-2xl font-bold mb-4">Fukaken 進捗管理</h1>
 
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
       <div className="calendar-container bg-white shadow p-4 rounded-xl">
         <Calendar
           tileClassName={({ date }) => {
@@ -154,7 +170,7 @@ function App() {
 
       {/* 全体スケジュール */}
       <div className="bg-white shadow p-4 rounded-xl w-full max-w-3xl mb-8">
-        <h2 className="text-lg font-semibold mb-3">🗓️ 全体スケジュール目安</h2>
+        <h2 className="text-lg font-semibold mb-3">全体スケジュール目安</h2>
         <ul className="space-y-3">
           {schedule.map((s, index) => (
             <li key={index} className="border-l-4 border-blue-500 pl-3">
@@ -168,10 +184,12 @@ function App() {
           ))}
         </ul>
       </div>
+      </div>
 
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
       {/* タスク管理 */}
       <div className="bg-white shadow p-4 rounded-xl w-full max-w-2xl">
-        <h2 className="text-lg font-semibold mb-2">🧩 班ごとのタスク管理</h2>
+        <h2 className="text-lg font-semibold mb-2">班ごとのタスク管理</h2>
         <ul className="space-y-2">
           {tasks.map((task) => (
             <li
@@ -213,13 +231,7 @@ function App() {
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
           />
-          <input
-            type="text"
-            placeholder="班名（例：ソフト班）"
-            className="border p-2 rounded-md"
-            value={newTeam}
-            onChange={(e) => setNewTeam(e.target.value)}
-          />
+          
           <select
             className="border p-2 rounded-md"
             value={newTeam}
@@ -261,6 +273,19 @@ function App() {
           ))}
         </div>
         </div>
+      </div>
+
+        <div className="space-y-3">
+        {tasks.map((task) => (
+          <TaskItem
+            key={task.id}
+            task={task}
+            onProgressChange={handleProgressChange}
+            onCommentChange={handleCommentChange}
+          />
+        ))}
+      </div>
+
       </div>
        {/* 各班の進捗まとめ */}
       <div className="grid grid-cols-3 gap-4 mb-8">
