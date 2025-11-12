@@ -1,124 +1,39 @@
+/* index.css */
 @import "tailwindcss";
 
-/* カスタムテーマ / 微調整（App.tsx の雰囲気に合わせる） */
-:root{
-  --bg-start: #f8fafc;
-  --bg-end: #eef2ff;
-  --primary: 38, 99, 255; /* rgb(38,99,255) */
-  --muted: #64748b;
-  --card: rgba(255,255,255,0.9);
-  --accent: rgba(59,130,246,0.08);
-  --radius-lg: 12px;
+:root {
+  --primary: 59,130,246; /* Tailwind blue-500 */
 }
 
-/* 全体 */
-html,body,#root{
-  height:100%;
-}
-body{
-  background: linear-gradient(180deg,var(--bg-start),var(--bg-end));
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  color: #0f172a;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+.bg-white.shadow.p-4.rounded-xl {
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 8px 20px rgba(59,130,246,0.08);
 }
 
-/* 共通カード調整（App.tsx で使っている .bg-white.shadow.p-4.rounded-xl を対象） */
-.bg-white.shadow.p-4.rounded-xl{
-  background: var(--card);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 24px rgba(15,23,42,0.06);
-  border: 1px solid rgba(15,23,42,0.03);
+.text-blue-600.font-semibold {
+  background: rgba(var(--primary), 0.08);
+  border-radius: 9999px;
+  padding: 0.25rem 0.6rem;
 }
 
-/* ヘッダー */
-h1.text-2xl.font-bold.mb-4{
-  letter-spacing: -0.02em;
-  color: rgb(var(--primary));
-  display:flex;
-  align-items:center;
-  gap:8px;
+/* react-calendar カスタム装飾 */
+.calendar-container {
+  width: 100%;
+  max-width: 480px;
 }
 
-/* サブ見出し */
-h2.text-lg.font-semibold{
-  color:#0b1220;
-}
-
-/* カレンダー周りの微調整 */
-.react-calendar{
-  border:none;
-  background:transparent;
-  box-shadow:none;
-}
-.react-calendar__tile--now{
-  background: rgba(59,130,246,0.12);
-  border-radius:8px;
-}
-.react-calendar__tile--active{
-  background: rgb(var(--primary));
-  color:white;
-  border-radius:8px;
-}
-
-/* スケジュール項目（左のラインを強調） */
-.border-l-4.border-blue-500.pl-3{
-  padding-top:0.5rem;
-  padding-bottom:0.5rem;
-  border-left-width:4px;
-  border-left-color: rgba(var(--primary),0.95);
-  background: linear-gradient(90deg, rgba(59,130,246,0.02), transparent);
-  border-radius: 6px;
-}
-
-/* タスクリスト項目 */
-.border.p-2.rounded-md.flex.justify-between.items-center{
-  background: linear-gradient(90deg, rgba(2,6,23,0.01), rgba(255,255,255,0));
-  border-color: rgba(15,23,42,0.06);
-}
-
-/* 進捗表示 */
-.text-blue-600.font-semibold{
-  background: var(--accent);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset;
-}
-
-/* フォーム入力 */
-input[type="text"], select{
-  background: white;
-  border: 1px solid rgba(15,23,42,0.06);
-  padding: 0.5rem 0.65rem;
+.react-calendar__tile.highlight {
+  background-color: rgba(59,130,246,0.08);
   border-radius: 8px;
-  outline: none;
-  transition: box-shadow 0.12s ease, border-color 0.12s ease;
-}
-input[type="text"]:focus, select:focus{
-  box-shadow: 0 6px 18px rgba(59,130,246,0.08);
-  border-color: rgba(var(--primary),0.9);
 }
 
-/* ボタン */
-button.bg-blue-500{
-  background: linear-gradient(180deg, rgb(var(--primary)), rgb(31,96,255));
-  box-shadow: 0 6px 18px rgba(59,130,246,0.18);
-  border-radius: 10px;
-  padding: 0.55rem 0.9rem;
-  transition: transform .08s ease, box-shadow .12s ease;
-}
-button.bg-blue-500:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 10px 28px rgba(59,130,246,0.2);
+.react-calendar__tile.highlight:hover {
+  background-color: rgba(59,130,246,0.15);
 }
 
-/* モバイル微調整 */
-@media (max-width:640px){
-  .min-h-screen.bg-gray-50.p-6.flex.flex-col.items-center{
-    padding: 1.25rem;
-  }
-  .bg-white.shadow.p-4.rounded-xl.w-full.max-w-3xl{
-    padding: 0.9rem;
-  }
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin: 2px auto 0;
 }
