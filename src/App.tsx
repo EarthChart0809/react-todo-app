@@ -1,4 +1,4 @@
-import React, { useState, type ChangeEvent } from "react";
+import { useState, useEffect,type ChangeEvent } from "react"; // ◀◀ 追加
 import "react-calendar/dist/Calendar.css";
 import Calendar from "react-calendar";
 import { TaskItem } from "./task_management";
@@ -76,6 +76,31 @@ function App() {
   const [newDeadline, setNewDeadline] = useState<Date | null>(null);
   const [newTodoPriority, setNewTodoPriority] = useState<number>(3); 
 
+  const localStorageKey = "todoapp-tasks-v1"; // ◀◀ 追加
+
+  // App コンポーネントの初回実行時のみLocalStorageからTodoデータを復元
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(localStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as (Omit<Task, "deadline"> & { deadline: string | null })[];
+      const converted = parsed.map((p) => ({ ...p, deadline: p.deadline ? new Date(p.deadline) : null }));
+      setTasks(converted);
+    } catch (e) {
+      console.error("localStorage load failed:", e);
+    }
+  }, []);
+
+  // 状態 todos または initialized に変更があったときTodoデータを保存
+  useEffect(() => {
+    try {
+      const toStore = tasks.map((t) => ({ ...t, deadline: t.deadline ? t.deadline.toISOString() : null }));
+      localStorage.setItem(localStorageKey, JSON.stringify(toStore));
+    } catch (e) {
+      console.error("localStorage save failed:", e);
+    }
+  }, [tasks]);
+
   // 優先度マッピング
   const PRIORITY_LABEL: Record<number, string> = { 1: "急ぎ", 2: "通常", 3: "後回し" };
   const PRIORITY_COLOR: Record<number, string> = { 1: "#ef4444", 2: "#f59e0b", 3: "#6b7280" };
@@ -150,6 +175,44 @@ function App() {
     );
   };
 
+  // 初回会議日（例: 2025年10月8日 を初回とする）
+  const meetingStart = new Date(2025, 9, 8); // 月は0始まり（9 = 10月）
+
+  // 日付が隔週水曜の会議日に該当するか
+  const isBiweeklyWednesday = (date: Date) => {
+    // 水曜日かチェック（0=日曜, 3=水曜）
+    if (date.getDay() !== 3) return false;
+    // 日付差を週単位で計算（UTC に寄せる）
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const startUtc = Date.UTC(meetingStart.getFullYear(), meetingStart.getMonth(), meetingStart.getDate());
+    const dUtc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    const weeks = Math.floor((dUtc - startUtc) / msPerWeek);
+    return weeks >= 0 && weeks % 2 === 0;
+  };
+
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
+
+  const archiveTask = (id: number) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    // 安全に更新（関数型アップデート）
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setArchivedTasks((prev) => [...prev, task]);
+  };
+
+  // アーカイブから復元
+  const restoreTask = (id: number) => {
+    const task = archivedTasks.find((t) => t.id === id);
+    if (!task) return;
+    setArchivedTasks((prev) => prev.filter((t) => t.id !== id));
+    setTasks((prev) => [...prev, task]);
+  };
+
+  // // アーカイブから完全削除
+  // const deleteArchived = (id: number) => {
+  //   setArchivedTasks((prev) => prev.filter((t) => t.id !== id));
+  // };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">Fukaken 進捗管理</h1>
@@ -163,7 +226,14 @@ function App() {
           }}
           tileContent={({ date }) => {
             const color = getScheduleColor(date);
-            return color ? <div className="dot" style={{ background: color }}></div> : null;
+            return (
+              <div className="flex flex-col items-center">
+                {color ? <div className="dot" style={{ background: color }}></div> : null}
+                {isBiweeklyWednesday(date) ? (
+                  <div className="text-xs text-blue-600 mt-1">会議</div>
+                ) : null}
+              </div>
+            );
           }}
         />
       </div>
@@ -329,12 +399,20 @@ function App() {
               完了
             </button>
           ) : (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm cursor-not-allowed"
-            >
-              完了済み
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                disabled
+                className="bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm cursor-not-allowed"
+              >
+                完了済み
+              </button>
+              <button
+                onClick={() => archiveTask(task.id)}
+                className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm"
+              >
+                アーカイブ
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -359,6 +437,36 @@ function App() {
     </div>
   ))}
 </div>
+{archivedTasks.length > 0 && (
+  <div className="bg-white shadow p-4 rounded-xl w-full max-w-2xl mt-8">
+    <h2 className="text-lg font-semibold mb-2">📦 アーカイブされたタスク</h2>
+    <ul className="space-y-2">
+      {archivedTasks.map((task) => (
+        <li key={task.id} className="p-2 border rounded-md bg-gray-100 text-gray-500 flex justify-between items-center">
+          <div>
+            <p className="font-medium">{task.title}</p>
+            <p className="text-sm">{task.team}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => restoreTask(task.id)}
+              className="text-blue-600 hover:underline text-sm"
+            >
+              元に戻す
+            </button>
+            {/* <button
+              onClick={() => deleteArchived(task.id)}
+              className="text-red-600 hover:underline text-sm"
+            >
+              削除
+            </button> */}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
     </div>
   );
 }
