@@ -1,4 +1,4 @@
-import { useState, useEffect,type ChangeEvent } from "react"; // ◀◀ 追加
+import { useState, useEffect,type ChangeEvent } from "react";
 import "react-calendar/dist/Calendar.css";
 import Calendar from "react-calendar";
 import { TaskItem } from "./task_management";
@@ -208,10 +208,17 @@ function App() {
     setTasks((prev) => [...prev, task]);
   };
 
-  // // アーカイブから完全削除
-  // const deleteArchived = (id: number) => {
-  //   setArchivedTasks((prev) => prev.filter((t) => t.id !== id));
-  // };
+  // アーカイブから完全削除
+  const deleteArchived = (id: number) => {
+    const task = archivedTasks.find((t) => t.id === id);
+    if (!task) return;
+    // フールプルーフ：確認ダイアログを表示
+    const confirmed = window.confirm(
+      `アーカイブ済みタスク「${task.title}」を完全に削除しますか？この操作は取り消せません。`
+    );
+    if (!confirmed) return;
+    setArchivedTasks((prev) => prev.filter((t) => t.id !== id));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
@@ -243,8 +250,19 @@ function App() {
         <h2 className="text-lg font-semibold mb-3">全体スケジュール目安</h2>
         <ul className="space-y-3">
           {schedule.map((s, index) => (
-            <li key={index} className="border-l-4 border-blue-500 pl-3">
-              <p className="font-semibold">{s.period}</p>
+            <li
+              key={index}
+              className="pl-3"
+              style={{ borderLeft: `4px solid ${s.color}`, paddingLeft: "0.75rem" }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="inline-block w-3 h-3 rounded-full"
+                  style={{ background: s.color }}
+                  aria-hidden
+                />
+                <p className="font-semibold m-0">{s.period}</p>
+              </div>
               <ul className="text-gray-700 list-disc ml-6">
                 {s.tasks.map((t, i) => (
                   <li key={i}>{t}</li>
@@ -454,12 +472,12 @@ function App() {
             >
               元に戻す
             </button>
-            {/* <button
+            <button
               onClick={() => deleteArchived(task.id)}
               className="text-red-600 hover:underline text-sm"
             >
               削除
-            </button> */}
+            </button>
           </div>
         </li>
       ))}
