@@ -13,6 +13,8 @@ type Task = {
   comment: string;
 };
 
+type CelebrationState = { show: boolean; title?: string };
+
 function App() {
   const schedule = [
     {
@@ -24,19 +26,19 @@ function App() {
     {
       period: "12月初旬（後期中間明け）",
       tasks: ["アイデア決定", "エントリーシート作成"],
-      range: [new Date(2025, 11, 1), new Date(2025, 11, 10)],
+      range: [new Date(2025, 11, 10), new Date(2025, 12, 10)],
       color: "#34d399", // green-400
     },
     {
       period: "2月中旬",
-      tasks: ["書類審査"],
+      tasks: ["書類審査", "学年末試験"],
       range: [new Date(2026, 1, 10), new Date(2026, 1, 20)],
       color: "#facc15", // yellow-400
     },
     {
       period: "結果判明後",
       tasks: ["部品発注", "仕様決定", "回路班・プログラム班始動"],
-      range: [new Date(2026, 1, 21), new Date(2026, 2, 15)],
+      range: [new Date(2026, 1, 15), new Date(2026, 1, 30)],
       color: "#f97316", // orange-400
     },
     {
@@ -75,6 +77,7 @@ function App() {
   const [newTeam, setNewTeam] = useState("");
   const [newDeadline, setNewDeadline] = useState<Date | null>(null);
   const [newTodoPriority, setNewTodoPriority] = useState<number>(3); 
+  const [celebration, setCelebration] = useState<CelebrationState>({ show: false });
 
   const localStorageKey = "todoapp-tasks-v1"; // ◀◀ 追加
 
@@ -102,8 +105,8 @@ function App() {
   }, [tasks]);
 
   // 優先度マッピング
-  const PRIORITY_LABEL: Record<number, string> = { 1: "急ぎ", 2: "通常", 3: "後回し" };
-  const PRIORITY_COLOR: Record<number, string> = { 1: "#ef4444", 2: "#f59e0b", 3: "#6b7280" };
+  const PRIORITY_LABEL: Record<number, string> = { 1: "後回し", 2: "通常", 3: "急ぎ" };
+  const PRIORITY_COLOR: Record<number, string> = { 1: "#6b7280", 2: "#f59e0b", 3: "#ef4444" };
 
   const formatDateForInput = (d: Date) => {
     const pad = (n: number) => n.toString().padStart(2, "0");
@@ -131,7 +134,12 @@ function App() {
   };
 
   const updateProgress = (id: number, progress: number) => {
-    setTasks(tasks.map((task) => (task.id === id ? { ...task, progress } : task)));
+    // 完了（100）になった瞬間に演出を出す
+    const prev = tasks.find((t) => t.id === id);
+    setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, progress } : task)));
+    if (prev && prev.progress < 100 && progress === 100) {
+      showCelebration(prev.title);
+    }
   };
 
   const updateDeadline = (e: ChangeEvent<HTMLInputElement>) => {
@@ -220,8 +228,76 @@ function App() {
     setArchivedTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // 表示タイマーを管理
+  let celebrationTimer: number | undefined;
+
+  const showCelebration = (title?: string) => {
+    // 既に表示中なら一旦クリアして再表示
+    window.clearTimeout(celebrationTimer);
+    setCelebration({ show: true, title });
+    celebrationTimer = window.setTimeout(() => setCelebration({ show: false }), 2000);
+  };
+
+  const [notifiedOverdue, setNotifiedOverdue] = useState<number[]>([]);
+
+  const isOverdue = (task: Task) =>
+    task.deadline !== null && task.deadline.getTime() < Date.now() && task.progress < 100;
+
+  // 期限切れ検知とブラウザ通知（tasks が変わるたび）
+  useEffect(() => {
+    const nowOverdueIds = tasks.filter(isOverdue).map((t) => t.id);
+    const newlyOverdue = nowOverdueIds.filter((id) => !notifiedOverdue.includes(id));
+
+    if (newlyOverdue.length > 0) {
+      // リクエスト済みでなければ権限取得を試みる
+      if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(() => {
+          /* 権限後は次の更新で通知を送る */
+        });
+      }
+      // すでに許可されていれば通知を送る
+      if ("Notification" in window && Notification.permission === "granted") {
+        newlyOverdue.forEach((id) => {
+          const t = tasks.find((x) => x.id === id);
+          if (t) {
+            new Notification(`期限切れ: ${t.title}`, {
+              body: `${t.team} のタスクの期限が過ぎました`,
+            });
+          }
+        });
+      }
+    }
+    setNotifiedOverdue(nowOverdueIds);
+  }, [tasks]);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+      {/* 完了演出オーバーレイ */}
+      {celebration.show && (
+        <div className="celebration-overlay" role="status" aria-live="polite">
+          <div className="celebration-card">
+            {/* チェックSVG */}
+            <svg className="celebration-icon" viewBox="0 0 24 24" aria-hidden>
+              <circle cx="12" cy="12" r="10" fill="#10b981" />
+              <path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
+
+              {/* 任意画像（public 配下のパス） */}
+            <img src="Fukaken.png" alt="お祝い" className="celebration-image" />
+
+            <div className="celebration-text">
+              完了！{celebration.title ?? ""}<br/>
+              お疲れ様！部長より
+            </div>
+            <div className="confetti-root" aria-hidden>
+              {Array.from({ length: 20 }).map((_, i) => (
+                <span key={i} className={`confetti confetti-${i % 6}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-4">Fukaken 進捗管理</h1>
 
       <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
@@ -282,7 +358,8 @@ function App() {
           {tasks.map((task) => (
             <li
               key={task.id}
-              className="border p-2 rounded-md flex justify-between items-center"
+              className={`border p-2 rounded-md flex justify-between items-center ${isOverdue(task) ? "overdue-card" : ""}`}
+
             >
               <div>
                 <p className="font-medium">{task.title}</p>
@@ -291,6 +368,9 @@ function App() {
                   {task.deadline ? (
                     <p className="text-sm text-gray-400">期限: {formatDateForInput(new Date(task.deadline))}</p>
                   ) : null}
+                  {isOverdue(task) && (
+                    <span className="overdue-badge">期限切れ</span>
+                  )}
                   {/* 優先度バッジ */}
                   <span
                     className="text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -457,7 +537,7 @@ function App() {
 </div>
 {archivedTasks.length > 0 && (
   <div className="bg-white shadow p-4 rounded-xl w-full max-w-2xl mt-8">
-    <h2 className="text-lg font-semibold mb-2">📦 アーカイブされたタスク</h2>
+    <h2 className="text-lg font-semibold mb-2">アーカイブされたタスク</h2>
     <ul className="space-y-2">
       {archivedTasks.map((task) => (
         <li key={task.id} className="p-2 border rounded-md bg-gray-100 text-gray-500 flex justify-between items-center">
@@ -488,6 +568,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;
